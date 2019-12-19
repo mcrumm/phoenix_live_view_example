@@ -64,6 +64,72 @@ Hooks.SavedForm = {
   }
 }
 
+window.googletag = window.googletag || { cmd: []};
+
+const adModule = {
+  destroySlotById(id){
+    if (window.googletag && googletag.pubadsReady) {
+      const allSlots = googletag.pubads().getSlots();
+      const foundSlotReference = allSlots.find(slot => slot.getSlotElementId() === id);
+
+      const destroyResult = googletag.destroySlots([foundSlotReference]);
+      console.log(`destroySlots("${id}") result`, destroyResult);
+
+      if (destroyResult) {
+        document.getElementById(id).dataset.loaded = false;
+      }
+      return destroyResult;
+    }
+    return false;
+  },
+  setupSlotById(id){
+    const adContainer = document.getElementById(id);
+    if (adContainer.dataset.loaded === "true") return
+
+    // use the DOM to maintain state around if the ad was loaded or not
+    // also, this protects against both mounted() and updated() firing on page load
+    adContainer.dataset.loaded = true;
+
+    googletag.cmd.push(() => {
+      const adUnitPath = adContainer.dataset.adUnitPath;
+
+      googletag
+        .defineSlot(adUnitPath, [300, 250], adContainer.id)
+        .addService(googletag.pubads());
+
+      googletag.enableServices();
+      googletag.display(adContainer.id);
+    });
+  }
+}
+
+Hooks.Ads = {
+  mounted(){
+    console.log('mounted() hook')
+
+    adModule.setupSlotById('ad-1');
+    adModule.setupSlotById('ad-2');
+
+    // create custom event listener to manually trigger the beforeUpdated() hook
+    document.querySelector('input[type="checkbox"]').addEventListener('click', function () {
+      Hooks.Ads.beforeUpdated();
+    });
+
+  },
+  updated(){
+    console.log('updated() hook');
+
+    // only set up the second ad slot since it gets destroyed every time the list updates
+    adModule.setupSlotById('ad-2');
+  },
+  beforeUpdated(){
+    console.log('pretend beforeUpdated() hook')
+    // only destroy the second ad slot since it's inside a dynamic list
+    // and can't be ignored by phx-update="ignore"
+    adModule.destroySlotById('ad-2');
+  }
+}
+
 let csrfToken = document.querySelector("meta[name='csrf-token']").getAttribute("content");
 let liveSocket = new LiveSocket("/live", Socket, {hooks: Hooks, params: {_csrf_token: csrfToken}})
 

@@ -36,6 +36,7 @@ defmodule DemoWeb.Router do
     live "/users", UserLive.Index
     live "/users-scroll", UserLive.IndexManualScroll
     live "/users-auto-scroll", UserLive.IndexAutoScroll
+    live "/filter-users-with-ads", UserLive.IndexFilterUsersWithAds
 
     live "/users/new", UserLive.New
     live "/users/:id", UserLive.Show
