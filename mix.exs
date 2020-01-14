@@ -34,7 +34,7 @@ defmodule Demo.Mixfile do
   defp deps do
     [
       {:phoenix, "~> 1.4.9"},
-      {:phoenix_live_view, github: "phoenixframework/phoenix_live_view", ref: "e1d9ee1"},
+      {:phoenix_live_view, github: "phoenixframework/phoenix_live_view", branch: "cm-before-js"},
       {:plug_cowboy, "~> 2.0"},
       {:plug, "~> 1.8"},
       {:phoenix_pubsub, "~> 1.1"},
