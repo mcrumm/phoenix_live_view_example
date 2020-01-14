@@ -1,16 +1,16 @@
 import css from "../css/app.css";
 import "phoenix_html"
-import {Socket} from "phoenix"
-import {LiveSocket, debug, View} from "phoenix_live_view"
+import { Socket } from "phoenix"
+import { LiveSocket, debug, View } from "phoenix_live_view"
 
 let Hooks = {}
 
 Hooks.PhoneNumber = {
-  mounted(){
+  mounted() {
     let pattern = /^(\d{3})(\d{3})(\d{4})$/
     this.el.addEventListener("input", e => {
       let match = this.el.value.replace(/\D/g, "").match(pattern)
-      if(match) {
+      if (match) {
         this.el.value = `${match[1]}-${match[2]}-${match[3]}`
       }
     })
@@ -27,47 +27,47 @@ let scrollAt = () => {
 
 Hooks.InfiniteScroll = {
   page() { return this.el.dataset.page },
-  mounted(){
+  mounted() {
     this.pending = this.page()
     window.addEventListener("scroll", e => {
-      if(this.pending == this.page() && scrollAt() > 90){
+      if (this.pending == this.page() && scrollAt() > 90) {
         this.pending = this.page() + 1
         this.pushEvent("load-more", {})
       }
     })
   },
-  updated(){ this.pending = this.page() }
+  updated() { this.pending = this.page() }
 }
 
 let serializeForm = (form) => {
   let formData = new FormData(form)
   let params = new URLSearchParams()
-  for(let [key, val] of formData.entries()){ params.append(key, val) }
+  for (let [key, val] of formData.entries()) { params.append(key, val) }
 
   return params.toString()
 }
 
 let Params = {
   data: {},
-  set(namespace, key, val){
-    if(!this.data[namespace]){ this.data[namespace] = {}}
+  set(namespace, key, val) {
+    if (!this.data[namespace]) { this.data[namespace] = {} }
     this.data[namespace][key] = val
   },
-  get(namespace){ return this.data[namespace] || {} }
+  get(namespace) { return this.data[namespace] || {} }
 }
 
 Hooks.SavedForm = {
-  mounted(){
+  mounted() {
     this.el.addEventListener("input", e => {
       Params.set(this.viewName, "stashed_form", serializeForm(this.el))
     })
   }
 }
 
-window.googletag = window.googletag || { cmd: []};
+window.googletag = window.googletag || { cmd: [] };
 
 const adModule = {
-  destroySlotById(id){
+  destroySlotById(id) {
     if (window.googletag && googletag.pubadsReady) {
       const allSlots = googletag.pubads().getSlots();
       const foundSlotReference = allSlots.find(slot => slot.getSlotElementId() === id);
@@ -82,7 +82,7 @@ const adModule = {
     }
     return false;
   },
-  setupSlotById(id){
+  setupSlotById(id) {
     const adContainer = document.getElementById(id);
     if (adContainer.dataset.loaded === "true") return
 
@@ -104,26 +104,20 @@ const adModule = {
 }
 
 Hooks.Ads = {
-  mounted(){
+  mounted() {
     console.log('mounted() hook')
 
     adModule.setupSlotById('ad-1');
     adModule.setupSlotById('ad-2');
-
-    // create custom event listener to manually trigger the beforeUpdated() hook
-    document.querySelector('input[type="checkbox"]').addEventListener('click', function () {
-      Hooks.Ads.beforeUpdated();
-    });
-
   },
-  updated(){
+  updated() {
     console.log('updated() hook');
 
     // only set up the second ad slot since it gets destroyed every time the list updates
     adModule.setupSlotById('ad-2');
   },
-  beforeUpdated(){
-    console.log('pretend beforeUpdated() hook')
+  beforeUpdate() {
+    console.log('beforeUpdate() hook')
     // only destroy the second ad slot since it's inside a dynamic list
     // and can't be ignored by phx-update="ignore"
     adModule.destroySlotById('ad-2');
@@ -131,7 +125,7 @@ Hooks.Ads = {
 }
 
 let csrfToken = document.querySelector("meta[name='csrf-token']").getAttribute("content");
-let liveSocket = new LiveSocket("/live", Socket, {hooks: Hooks, params: {_csrf_token: csrfToken}})
+let liveSocket = new LiveSocket("/live", Socket, { hooks: Hooks, params: { _csrf_token: csrfToken } })
 
 liveSocket.connect()
 
