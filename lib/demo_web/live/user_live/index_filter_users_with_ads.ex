@@ -8,8 +8,16 @@ defmodule DemoWeb.UserLive.IndexFilterUsersWithAds do
     <form id="filters-form" phx-change="filter_change">
       <div class="filters">
         <label>
-          <input type="checkbox" id="even" name="even">
+          <input type="radio" name="filter" value="none" <%= if @filter not in ~w(even odd), do: ~s( checked="checked") %>>
+          Reset filter
+        </label>
+        <label>
+          <input type="radio" name="filter" value="even" <%= if @filter == "even", do: ~s( checked="checked") %>>
           Filter results to even numbers only
+        </label>
+        <label>
+          <input type="radio" name="filter" value="odd" <%= if @filter == "odd", do: ~s( checked="checked") %>>
+          Filter results to ODD numbers only
         </label>
       </div>
     </form>
@@ -41,20 +49,28 @@ defmodule DemoWeb.UserLive.IndexFilterUsersWithAds do
   end
 
   def handle_event("filter_change", %{"_target" => ["even"], "even" => "on"}, socket) do
-    {:noreply, assign(socket, users: fetch_even_users())}
+    {:noreply, assign(socket, filtered: true, users: fetch_even_users())}
   end
 
-  def handle_event("filter_change", %{"_target" => ["odd"], "odd" => "on"}, socket) do
-    {:noreply, assign(socket, users: fetch_odd_users())}
+  def handle_event("filter_change", %{"_target" => ["even"]}, socket) do
+    {:noreply, assign(socket, filtered: true, users: fetch_all_users())}
   end
 
-  def handle_event("filter_change", _payload, socket) do
-    all_users = fetch_all_users()
-    {:noreply, assign(socket, users: all_users)}
+  def handle_event("filter_change", %{"_target" => ["filter"], "filter" => "even"}, socket) do
+    {:noreply, assign(socket, filter: "even", users: fetch_even_users())}
+  end
+
+  def handle_event("filter_change", %{"_target" => ["filter"], "filter" => "odd"}, socket) do
+    {:noreply, assign(socket, filter: "odd", users: fetch_odd_users())}
+  end
+
+  def handle_event("filter_change", payload, socket) do
+    IO.inspect(payload, label: "filter_change")
+    {:noreply, assign(socket, filtered: false, filter: nil, users: fetch_all_users())}
   end
 
   def mount(_session, socket) do
-    {:ok, assign(socket, users: fetch_all_users())}
+    {:ok, assign(socket, filtered: false, filter: nil, users: fetch_all_users())}
   end
 
   defp fetch_all_users() do
